@@ -55,13 +55,13 @@ case class SharedLibrary(name: String) extends Target { // Target which represen
 
 object CcPlugin extends AutoPlugin {
   override def requires = sbt.plugins.JvmPlugin
-  override def trigger = allRequirements
 
   object autoImport {
     lazy val ccTargets         = settingKey[ListSet[Target]]("Targets")
 
     lazy val cCompiler    = settingKey[String]("Command to compile C source files.")
     lazy val cFlags       = settingKey[Map[Target,Seq[String]]]("Flags to be passed to the C compiler.")
+    lazy val cFlagsDynamic = taskKey[Map[Target, Seq[String]]]("Flags to be passed to the C compiler (dynamically defined)")
     lazy val cSources     = settingKey[Map[Target,Seq[File]]]("Path of C source files.")
     lazy val cSourceFiles = taskKey[Map[Target,Seq[File]]]("Path of C source files (dynamically defined).")
     lazy val cIncludes    = settingKey[Map[Target,Seq[File]]]("Directories to search C header files.")
@@ -74,6 +74,7 @@ object CcPlugin extends AutoPlugin {
 
     lazy val cxxCompiler    = settingKey[String]("Command to compile C++ source files.")
     lazy val cxxFlags       = settingKey[Map[Target,Seq[String]]]("Flags to be passed to the C++ compiler.")
+    lazy val cxxFlagsDynamic = taskKey[Map[Target,Seq[String]]]("Flags to be passed to the C++ compiler (dynamically defined)")
     lazy val cxxSources     = settingKey[Map[Target,Seq[File]]]("Path of C++ source files.")
     lazy val cxxSourceFiles = taskKey[Map[Target,Seq[File]]]("Path of C++ source files (dynamically defined).")
     lazy val cxxIncludes    = settingKey[Map[Target,Seq[File]]]("Directories to search C++ header files.")
@@ -206,6 +207,7 @@ object CcPlugin extends AutoPlugin {
 
     cCompiler    := "cc",
     cFlags       := Map(),
+    cFlagsDynamic := { cFlags.value },
     cSources     := Map(),
     cSourceFiles := { cSources.value },
     cIncludes    := Map(),
@@ -213,6 +215,7 @@ object CcPlugin extends AutoPlugin {
 
     cxxCompiler    := "g++",
     cxxFlags       := Map(),
+    cxxFlagsDynamic := { cxxFlags.value },
     cxxSources     := Map(),
     cxxSourceFiles := { cxxSources.value },
     cxxIncludes    := Map(),
@@ -230,7 +233,7 @@ object CcPlugin extends AutoPlugin {
 
       cccompile(
         cCompiler.value,
-        cFlags.value,
+        cFlagsDynamic.value,
         configuration.value,
         compileTargets,
         cSourceFiles.value,
@@ -243,7 +246,7 @@ object CcPlugin extends AutoPlugin {
     cCompileForExecutables := {
       cccompile(
         cCompiler.value,
-        cFlags.value,
+        cFlagsDynamic.value,
         configuration.value,
         ccTargets.value.filter(t => t.isInstanceOf[Executable]),
         cSourceFiles.value,
@@ -256,7 +259,7 @@ object CcPlugin extends AutoPlugin {
     cCompileForLibraries := {
       cccompile(
         cCompiler.value,
-        cFlags.value,
+        cFlagsDynamic.value,
         configuration.value,
         ccTargets.value.filter(t => t.isInstanceOf[Library]),
         cSourceFiles.value,
@@ -269,7 +272,7 @@ object CcPlugin extends AutoPlugin {
     cCompileForSharedLibraries := {
       cccompile(
         cCompiler.value,
-        cFlags.value,
+        cFlagsDynamic.value,
         configuration.value,
         ccTargets.value.filter(t => t.isInstanceOf[SharedLibrary]),
         cSourceFiles.value,
@@ -285,7 +288,7 @@ object CcPlugin extends AutoPlugin {
 
       cccompile(
         cxxCompiler.value,
-        cxxFlags.value,
+        cxxFlagsDynamic.value,
         configuration.value,
         compileTargets,
         cxxSourceFiles.value,
@@ -298,7 +301,7 @@ object CcPlugin extends AutoPlugin {
     cxxCompileForExecutables := {
       cccompile(
         cxxCompiler.value,
-        cxxFlags.value,
+        cxxFlagsDynamic.value,
         configuration.value,
         ccTargets.value.filter(t => t.isInstanceOf[Executable]),
         cxxSourceFiles.value,
@@ -311,7 +314,7 @@ object CcPlugin extends AutoPlugin {
     cxxCompileForLibraries := {
       cccompile(
         cxxCompiler.value,
-        cxxFlags.value,
+        cxxFlagsDynamic.value,
         configuration.value,
         ccTargets.value.filter(t => t.isInstanceOf[Library]),
         cxxSourceFiles.value,
@@ -324,7 +327,7 @@ object CcPlugin extends AutoPlugin {
     cxxCompileForSharedLibraries := {
       cccompile(
         cxxCompiler.value,
-        cxxFlags.value,
+        cxxFlagsDynamic.value,
         configuration.value,
         ccTargets.value.filter(t => t.isInstanceOf[SharedLibrary]),
         cxxSourceFiles.value,
